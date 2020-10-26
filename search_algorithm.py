@@ -2,6 +2,9 @@ import pygame
 import graphUI
 from node_color import white, yellow, black, red, blue, purple, orange, green
 from math import sqrt
+from queue import PriorityQueue
+
+pq = PriorityQueue()
 
 """
 Feel free print graph, edges to console to get more understand input.
@@ -137,11 +140,11 @@ def getMinCost(pq):
     return minIndex
 
 
-def nodeInPQ(pq, node):
-    for n in pq:
-        if node == n[0]:
-            return True
-    return False
+def nodeInPQ(node):
+    for i in range(len(pq.queue)):
+        if node == pq.queue[i][1]:
+            return i
+    return -1
 
 
 def UCS(graph, edges, edge_id, start, goal):
@@ -150,25 +153,29 @@ def UCS(graph, edges, edge_id, start, goal):
     """
     # TODO: your code
     parent = {}
-    pq = [(start, 0)]
+    pq.put((0, start))
     visited = [False] * len(graph)
     
     while pq:
-        print(pq)
-        node = pq.pop(getMinCost(pq))
-        print(node)
-        node_key = node[0]
-        node_cost = node[1]
+        node = pq.get()
+        node_key = node[1]
+        node_cost = node[0]
         if node_key == goal:
             print(trace(parent, start, goal))
             break
 
         for adjacent in graph[node_key][1]:
-            if visited[adjacent] == False and nodeInPQ(pq, adjacent) == False:
+            pq_index = nodeInPQ(adjacent)
+            _cost = cost(graph[node_key][0], graph[adjacent][0])
+
+            if visited[adjacent] == False and pq_index == -1:
                 parent[adjacent] = node_key
                 visited[adjacent] = True
-                pq.append((adjacent, cost(graph[node_key][0], graph[adjacent][0])))
-        
+                pq.put((node_cost + _cost, adjacent))
+            elif pq_index != -1:
+                if _cost < (pq.queue[pq_index][0]):
+                    pq.queue.pop(pq_index)
+                    pq.put((node_cost + _cost, adjacent))
 
 def AStar(graph, edges, edge_id, start, goal):
     """
