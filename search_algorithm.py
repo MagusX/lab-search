@@ -161,7 +161,10 @@ def UCS(graph, edges, edge_id, start, goal):
         node_key = node[1]
         node_cost = node[0]
         if node_key == goal:
-            print(trace(parent, start, goal))
+            path = trace(parent, start, goal)
+            _markStartNode(graph, start)
+            _markGoalNode(graph, path[-1])
+            _markFoundPath(path, edges, edge_id)
             break
 
         for adjacent in graph[node_key][1]:
@@ -172,10 +175,19 @@ def UCS(graph, edges, edge_id, start, goal):
                 parent[adjacent] = node_key
                 visited[adjacent] = True
                 pq.put((node_cost + _cost, adjacent))
+
+                edges[edge_id(node_key, adjacent)][1] = white
+                graph[node_key][3] = yellow
+                graph[adjacent][3] = red
+                graphUI.updateUI()
             elif pq_index != -1:
-                if _cost < (pq.queue[pq_index][0]):
+                if _cost < pq.queue[pq_index][0]:
                     pq.queue.pop(pq_index)
                     pq.put((node_cost + _cost, adjacent))
+
+        if node in parent.values():
+            graph[node_key][3] = blue
+            graphUI.updateUI()
 
 def AStar(graph, edges, edge_id, start, goal):
     """
