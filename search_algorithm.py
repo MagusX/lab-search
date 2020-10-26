@@ -1,6 +1,7 @@
 import pygame
 import graphUI
 from node_color import white, yellow, black, red, blue, purple, orange, green
+from math import sqrt
 
 """
 Feel free print graph, edges to console to get more understand input.
@@ -90,8 +91,57 @@ def DFS(graph, edges, edge_id, start, goal):
     DFS search
     """
     # TODO: your code
-    print("Implement DFS algorithm.")
-    pass
+    parent = {}
+    stack = [start]
+    visited = [False] * len(graph)
+    visited[start] = True
+
+    while stack:
+        print(parent)
+
+        node = stack.pop()
+        if node == goal:
+            path = trace(parent, start, goal)
+            _markStartNode(graph, start)
+            _markGoalNode(graph, path[-1])
+            _markFoundPath(path, edges, edge_id)
+            break
+
+        for adjacent in graph[node][1]:
+            if visited[adjacent] == False:
+                parent[adjacent] = node
+                visited[adjacent] = True
+                stack.append(adjacent)
+
+                edges[edge_id(node, adjacent)][1] = white
+                graph[node][3] = yellow
+                graph[adjacent][3] = red
+                graphUI.updateUI()
+
+        if node in parent.values():
+            graph[node][3] = blue
+            graphUI.updateUI()
+        
+
+def cost(nodeA, nodeB):
+    a = nodeA[0] - nodeB[0]
+    b = nodeA[1] - nodeB[1]
+    return sqrt(a * a + b * b)
+
+
+def getMinCost(pq):
+    minIndex = 0
+    for i in range(len(pq)):
+        if pq[i][1] < pq[minIndex][1]:
+            minIndex = i
+    return minIndex
+
+
+def nodeInPQ(pq, node):
+    for n in pq:
+        if node == n[0]:
+            return True
+    return False
 
 
 def UCS(graph, edges, edge_id, start, goal):
@@ -99,9 +149,26 @@ def UCS(graph, edges, edge_id, start, goal):
     Uniform Cost Search search
     """
     # TODO: your code
-    print("Implement Uniform Cost Search algorithm.")
-    pass
+    parent = {}
+    pq = [(start, 0)]
+    visited = [False] * len(graph)
+    
+    while pq:
+        print(pq)
+        node = pq.pop(getMinCost(pq))
+        print(node)
+        node_key = node[0]
+        node_cost = node[1]
+        if node_key == goal:
+            print(trace(parent, start, goal))
+            break
 
+        for adjacent in graph[node_key][1]:
+            if visited[adjacent] == False and nodeInPQ(pq, adjacent) == False:
+                parent[adjacent] = node_key
+                visited[adjacent] = True
+                pq.append((adjacent, cost(graph[node_key][0], graph[adjacent][0])))
+        
 
 def AStar(graph, edges, edge_id, start, goal):
     """
