@@ -185,6 +185,38 @@ def AStar(graph, edges, edge_id, start, goal):
         _markParent(graph, parent, node_key)
 
 
+def DijkstraSearch(graph, edges, edge_id, start, goal):
+    """
+    Dijkstra search
+    """
+    # TODO: your code
+    parent = {}
+    gScore = [INF] * len(graph)
+    fScore = [INF] * len(graph)
+    fScore[start] = 0
+    pq.put((fScore[start], start))
+    
+    while pq:
+        node = pq.get()
+        node_key = node[1]
+        node_cost = node[0]
+        if node_key == goal:
+            path = trace(parent, start, goal)
+            _markResult(graph, path, edges, edge_id, start, goal)
+            break
+
+        for adjacent in graph[node_key][1]:
+            tentative_gScore = fScore[node_key] + cost(graph[node_key][0], graph[adjacent][0])
+            if tentative_gScore < fScore[adjacent]:
+                parent[adjacent] = node_key
+                fScore[adjacent] = tentative_gScore
+                _markVisited(graph, edges, edge_id, node_key, adjacent)
+                if nodeInPQ(adjacent) == -1:
+                    pq.put((fScore[adjacent], adjacent))
+
+        _markParent(graph, parent, node_key)
+
+
 def example_func(graph, edges, edge_id, start, goal):
     """
     This function is just show some basic feature that you can use your project.
