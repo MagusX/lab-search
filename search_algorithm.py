@@ -4,6 +4,7 @@ from node_color import white, yellow, black, red, blue, purple, orange, green
 from math import sqrt
 from queue import PriorityQueue
 
+INF = 100000
 pq = PriorityQueue()
 
 """
@@ -13,37 +14,26 @@ Create new function/file if necessary
 """
 
 
-def _markFoundPath(path, edges, edge_id): # green
+def _markResult(graph, path, edges, edge_id, start, goal): # green
+    graph[start][3] = orange
+    graph[goal][3] = purple
+
     for i in range(len(path) - 1):
         edges[edge_id(path[i], path[i + 1])][1] = green
     graphUI.updateUI()
 
-def _markVisitedPathNode(graph, path, edges, edge_id): # white
-    for i in range(len(path) - 1):
-        edges[edge_id(path[i], path[i + 1])][1] = white
 
-    for i in path:
-        _markQueuedNode(graph, i)
-
+def _markVisited(graph, edges, edge_id, curNode, adjacent):
+    edges[edge_id(curNode, adjacent)][1] = white
+    graph[curNode][3] = yellow
+    graph[adjacent][3] = red
     graphUI.updateUI()
 
-def _markCurrentNode(graph, node): # yellow
-    graph[node][3] = yellow
-    graphUI.updateUI()
 
-def _markStartNode(graph, node): # orange
-    graph[node][3] = orange
-
-def _markGoalNode(graph, node): # purple
-    graph[node][3] = purple
-
-def _markVisitedNode(graph, node): # red
-    graph[node][3] = red
-    graphUI.updateUI()
-
-def _markQueuedNode(graph, node): # blue
-    graph[node][3] = blue
-    graphUI.updateUI()
+def _markParent(graph, parent, node):
+    if node in parent.values():
+            graph[node][3] = blue
+            graphUI.updateUI()
 
 
 def trace(parent, start, end):
@@ -68,9 +58,7 @@ def BFS(graph, edges, edge_id, start, goal):
         node = queue.pop(0)
         if node == goal:
             path = trace(parent, start, goal)
-            _markStartNode(graph, start)
-            _markGoalNode(graph, path[-1])
-            _markFoundPath(path, edges, edge_id)
+            _markResult(graph, path, edges, edge_id, start, goal)
             break
 
         for adjacent in graph[node][1]:
@@ -78,15 +66,9 @@ def BFS(graph, edges, edge_id, start, goal):
                 parent[adjacent] = node
                 visited[adjacent] = True
                 queue.append(adjacent)
+                _markVisited(graph, edges, edge_id, node, adjacent)
 
-                edges[edge_id(node, adjacent)][1] = white
-                graph[node][3] = yellow
-                graph[adjacent][3] = red
-                graphUI.updateUI()
-
-        if node in parent.values():
-            graph[node][3] = blue
-            graphUI.updateUI()
+        _markParent(graph, parent, node)
             
 
 def DFS(graph, edges, edge_id, start, goal):
@@ -100,14 +82,10 @@ def DFS(graph, edges, edge_id, start, goal):
     visited[start] = True
 
     while stack:
-        print(parent)
-
         node = stack.pop()
         if node == goal:
             path = trace(parent, start, goal)
-            _markStartNode(graph, start)
-            _markGoalNode(graph, path[-1])
-            _markFoundPath(path, edges, edge_id)
+            _markResult(graph, path, edges, edge_id, start, goal)
             break
 
         for adjacent in graph[node][1]:
@@ -115,29 +93,15 @@ def DFS(graph, edges, edge_id, start, goal):
                 parent[adjacent] = node
                 visited[adjacent] = True
                 stack.append(adjacent)
+                _markVisited(graph, edges, edge_id, node, adjacent)
 
-                edges[edge_id(node, adjacent)][1] = white
-                graph[node][3] = yellow
-                graph[adjacent][3] = red
-                graphUI.updateUI()
-
-        if node in parent.values():
-            graph[node][3] = blue
-            graphUI.updateUI()
+        _markParent(graph, parent, node)
         
 
 def cost(nodeA, nodeB):
     a = nodeA[0] - nodeB[0]
     b = nodeA[1] - nodeB[1]
     return sqrt(a * a + b * b)
-
-
-def getMinCost(pq):
-    minIndex = 0
-    for i in range(len(pq)):
-        if pq[i][1] < pq[minIndex][1]:
-            minIndex = i
-    return minIndex
 
 
 def nodeInPQ(node):
@@ -162,9 +126,7 @@ def UCS(graph, edges, edge_id, start, goal):
         node_cost = node[0]
         if node_key == goal:
             path = trace(parent, start, goal)
-            _markStartNode(graph, start)
-            _markGoalNode(graph, path[-1])
-            _markFoundPath(path, edges, edge_id)
+            _markResult(graph, path, edges, edge_id, start, goal)
             break
 
         for adjacent in graph[node_key][1]:
@@ -175,27 +137,52 @@ def UCS(graph, edges, edge_id, start, goal):
                 parent[adjacent] = node_key
                 visited[adjacent] = True
                 pq.put((node_cost + _cost, adjacent))
-
-                edges[edge_id(node_key, adjacent)][1] = white
-                graph[node_key][3] = yellow
-                graph[adjacent][3] = red
-                graphUI.updateUI()
+                _markVisited(graph, edges, edge_id, node_key, adjacent)
             elif pq_index != -1:
                 if _cost < pq.queue[pq_index][0]:
                     pq.queue.pop(pq_index)
                     pq.put((node_cost + _cost, adjacent))
 
-        if node in parent.values():
-            graph[node_key][3] = blue
-            graphUI.updateUI()
+        _markParent(graph, parent, node_key)
+
+
+def a_star_h(graph, cur, goal):
+    return cost(graph[cur][0], graph[goal][0])
+
 
 def AStar(graph, edges, edge_id, start, goal):
     """
     A star search
     """
     # TODO: your code
-    print("Implement A* algorithm.")
-    pass
+    parent = {}
+    gScore = [INF] * len(graph)
+    fScore = [INF] * len(graph)
+
+    gScore[start] = 0
+    fScore[start] = a_star_h(graph, start, goal)
+    pq.put((fScore[start], start))
+    
+    while pq:
+        node = pq.get()
+        node_key = node[1]
+        node_cost = node[0]
+        if node_key == goal:
+            path = trace(parent, start, goal)
+            _markResult(graph, path, edges, edge_id, start, goal)
+            break
+
+        for adjacent in graph[node_key][1]:
+            tentative_gScore = gScore[node_key] + cost(graph[node_key][0], graph[adjacent][0])
+            if tentative_gScore < gScore[adjacent]:
+                parent[adjacent] = node_key
+                gScore[adjacent] = tentative_gScore
+                fScore[adjacent] = gScore[adjacent] + a_star_h(graph, adjacent, goal)
+                _markVisited(graph, edges, edge_id, node_key, adjacent)
+                if nodeInPQ(adjacent) == -1:
+                    pq.put((fScore[adjacent], adjacent))
+
+        _markParent(graph, parent, node_key)
 
 
 def example_func(graph, edges, edge_id, start, goal):
