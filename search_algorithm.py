@@ -191,7 +191,6 @@ def DijkstraSearch(graph, edges, edge_id, start, goal):
     """
     # TODO: your code
     parent = {}
-    gScore = [INF] * len(graph)
     fScore = [INF] * len(graph)
     fScore[start] = 0
     pq.put((fScore[start], start))
@@ -206,10 +205,10 @@ def DijkstraSearch(graph, edges, edge_id, start, goal):
             break
 
         for adjacent in graph[node_key][1]:
-            tentative_gScore = fScore[node_key] + cost(graph[node_key][0], graph[adjacent][0])
-            if tentative_gScore < fScore[adjacent]:
+            tentative = fScore[node_key] + cost(graph[node_key][0], graph[adjacent][0])
+            if tentative < fScore[adjacent]:
                 parent[adjacent] = node_key
-                fScore[adjacent] = tentative_gScore
+                fScore[adjacent] = tentative
                 _markVisited(graph, edges, edge_id, node_key, adjacent)
                 if nodeInPQ(adjacent) == -1:
                     pq.put((fScore[adjacent], adjacent))
