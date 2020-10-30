@@ -36,8 +36,8 @@ def _markParent(graph, parent, node):
             graphUI.updateUI()
 
 
-def trace(parent, start, end):
-    path = [end]
+def trace(parent, start, goal):
+    path = [goal]
     while path[-1] != start:
         path.append(parent[path[-1]])
     path.reverse()
@@ -132,16 +132,16 @@ def UCS(graph, edges, edge_id, start, goal):
         for adjacent in graph[node_key][1]:
             pq_index = nodeInPQ(adjacent)
             _cost = cost(graph[node_key][0], graph[adjacent][0])
-
+            total_cost = node_cost + _cost
             if visited[adjacent] == False and pq_index == -1:
                 parent[adjacent] = node_key
                 visited[adjacent] = True
-                pq.put((node_cost + _cost, adjacent))
+                pq.put((total_cost, adjacent))
                 _markVisited(graph, edges, edge_id, node_key, adjacent)
             elif pq_index != -1:
-                if _cost < pq.queue[pq_index][0]:
+                if total_cost < pq.queue[pq_index][0]:
                     pq.queue.pop(pq_index)
-                    pq.put((node_cost + _cost, adjacent))
+                    pq.put((total_cost, adjacent))
 
         _markParent(graph, parent, node_key)
 
